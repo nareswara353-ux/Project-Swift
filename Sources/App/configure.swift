@@ -2,17 +2,14 @@ import Vapor
 import Fluent
 import FluentPostgresDriver
 import Infrastructure
-import Domain
 import Core
+import Domain
 
-public func configure(_ app: Application) async throws {
+func configure(_ app: Application) async throws {
     let config = try AppConfiguration.load()
     
     app.databases.use(
-        .postgres(
-            url: config.databaseURL,
-            maxConnections: 10
-        ),
+        .postgres(url: config.databaseURL),
         as: .psql
     )
     
@@ -21,5 +18,8 @@ public func configure(_ app: Application) async throws {
     
     try await app.autoMigrate()
     
-    try routes(app)
+    app.middleware.use(ErrorMiddleware.default(environment: app.environment))
+    
+    try app.register(collection: AuthController())
+    try app.register(collection: TaskController())
 }

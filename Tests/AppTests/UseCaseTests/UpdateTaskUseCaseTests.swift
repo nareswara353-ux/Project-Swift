@@ -8,32 +8,34 @@ final class UpdateTaskUseCaseTests: XCTestCase {
     
     func testUpdateTaskSuccess() async throws {
         let repo = MockTaskRepository()
-        let task = Task(
+        let createUseCase = CreateTaskUseCase(taskRepository: repo)
+        let createInput = CreateTaskUseCase.Input(
             title: "Original Title",
             description: "Original Description",
             status: .todo,
-            priority: .medium,
-            dueDate: Date().addingTimeInterval(86400),
+            priority: .low,
+            dueDate: Date().addingTimeInterval(3600),
             userId: userId
         )
-        try await repo.create(task)
+        let createOutput = try await createUseCase.execute(input: createInput)
+        let taskId = createOutput.task.id
         
-        let useCase = UpdateTaskUseCase(taskRepository: repo)
-        let input = UpdateTaskUseCase.Input(
-            taskId: task.id,
+        let updateUseCase = UpdateTaskUseCase(taskRepository: repo)
+        let updateInput = UpdateTaskUseCase.Input(
+            taskId: taskId,
             userId: userId,
             title: "Updated Title",
             description: "Updated Description",
             status: .inProgress,
             priority: .high,
-            dueDate: Date().addingTimeInterval(172800)
+            dueDate: Date().addingTimeInterval(7200)
         )
-        let output = try await useCase.execute(input: input)
+        let output = try await updateUseCase.execute(input: updateInput)
         XCTAssertEqual(output.task.title, "Updated Title")
         XCTAssertEqual(output.task.description, "Updated Description")
         XCTAssertEqual(output.task.status, .inProgress)
         XCTAssertEqual(output.task.priority, .high)
-        XCTAssertNotNil(output.task.dueDate)
+        XCTAssertEqual(output.task.userId, userId)
     }
     
     func testUpdateTaskNotFound() async throws {
@@ -42,11 +44,7 @@ final class UpdateTaskUseCaseTests: XCTestCase {
         let input = UpdateTaskUseCase.Input(
             taskId: UUID(),
             userId: userId,
-            title: "Updated Title",
-            description: nil,
-            status: nil,
-            priority: nil,
-            dueDate: nil
+            title: "New Title"
         )
         do {
             _ = try await useCase.execute(input: input)
@@ -59,28 +57,26 @@ final class UpdateTaskUseCaseTests: XCTestCase {
     
     func testUpdateTaskPermissionDenied() async throws {
         let repo = MockTaskRepository()
-        let task = Task(
-            title: "Test Task",
-            description: nil,
-            status: .todo,
-            priority: .medium,
-            dueDate: nil,
-            userId: userId
-        )
-        try await repo.create(task)
-        
-        let useCase = UpdateTaskUseCase(taskRepository: repo)
-        let input = UpdateTaskUseCase.Input(
-            taskId: task.id,
-            userId: otherUserId,
-            title: "Updated Title",
+        let createUseCase = CreateTaskUseCase(taskRepository: repo)
+        let createInput = CreateTaskUseCase.Input(
+            title: "My Task",
             description: nil,
             status: nil,
             priority: nil,
-            dueDate: nil
+            dueDate: nil,
+            userId: userId
+        )
+        let createOutput = try await createUseCase.execute(input: createInput)
+        let taskId = createOutput.task.id
+        
+        let updateUseCase = UpdateTaskUseCase(taskRepository: repo)
+        let updateInput = UpdateTaskUseCase.Input(
+            taskId: taskId,
+            userId: otherUserId,
+            title: "Hacked Title"
         )
         do {
-            _ = try await useCase.execute(input: input)
+            _ = try await updateUseCase.execute(input: updateInput)
             XCTFail("Expected permissionDenied error")
         } catch UpdateTaskUseCase.UpdateTaskError.permissionDenied {
         } catch {
@@ -90,28 +86,26 @@ final class UpdateTaskUseCaseTests: XCTestCase {
     
     func testUpdateTaskEmptyTitle() async throws {
         let repo = MockTaskRepository()
-        let task = Task(
-            title: "Original Title",
-            description: nil,
-            status: .todo,
-            priority: .medium,
-            dueDate: nil,
-            userId: userId
-        )
-        try await repo.create(task)
-        
-        let useCase = UpdateTaskUseCase(taskRepository: repo)
-        let input = UpdateTaskUseCase.Input(
-            taskId: task.id,
-            userId: userId,
-            title: "   ",
+        let createUseCase = CreateTaskUseCase(taskRepository: repo)
+        let createInput = CreateTaskUseCase.Input(
+            title: "Valid Title",
             description: nil,
             status: nil,
             priority: nil,
-            dueDate: nil
+            dueDate: nil,
+            userId: userId
+        )
+        let createOutput = try await createUseCase.execute(input: createInput)
+        let taskId = createOutput.task.id
+        
+        let updateUseCase = UpdateTaskUseCase(taskRepository: repo)
+        let updateInput = UpdateTaskUseCase.Input(
+            taskId: taskId,
+            userId: userId,
+            title: "   "
         )
         do {
-            _ = try await useCase.execute(input: input)
+            _ = try await updateUseCase.execute(input: updateInput)
             XCTFail("Expected emptyTitle error")
         } catch UpdateTaskUseCase.UpdateTaskError.emptyTitle {
         } catch {
@@ -121,28 +115,26 @@ final class UpdateTaskUseCaseTests: XCTestCase {
     
     func testUpdateTaskPastDueDate() async throws {
         let repo = MockTaskRepository()
-        let task = Task(
-            title: "Original Title",
-            description: nil,
-            status: .todo,
-            priority: .medium,
-            dueDate: Date().addingTimeInterval(86400),
-            userId: userId
-        )
-        try await repo.create(task)
-        
-        let useCase = UpdateTaskUseCase(taskRepository: repo)
-        let input = UpdateTaskUseCase.Input(
-            taskId: task.id,
-            userId: userId,
-            title: nil,
+        let createUseCase = CreateTaskUseCase(taskRepository: repo)
+        let createInput = CreateTaskUseCase.Input(
+            title: "Valid Title",
             description: nil,
             status: nil,
             priority: nil,
+            dueDate: Date().addingTimeInterval(3600),
+            userId: userId
+        )
+        let createOutput = try await createUseCase.execute(input: createInput)
+        let taskId = createOutput.task.id
+        
+        let updateUseCase = UpdateTaskUseCase(taskRepository: repo)
+        let updateInput = UpdateTaskUseCase.Input(
+            taskId: taskId,
+            userId: userId,
             dueDate: Date().addingTimeInterval(-3600)
         )
         do {
-            _ = try await useCase.execute(input: input)
+            _ = try await updateUseCase.execute(input: updateInput)
             XCTFail("Expected pastDueDate error")
         } catch UpdateTaskUseCase.UpdateTaskError.pastDueDate {
         } catch {

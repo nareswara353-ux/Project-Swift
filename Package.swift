@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 5.10
 import PackageDescription
 
 let package = Package(
@@ -19,7 +19,6 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-metrics.git", from: "2.4.0"),
     ],
     targets: [
-        // --- Core (Shared utilities, logging, config) ---
         .target(
             name: "Core",
             dependencies: [
@@ -28,7 +27,6 @@ let package = Package(
             ],
             path: "Sources/Core"
         ),
-        // --- Domain (Entities, Value Objects, Protocols) ---
         .target(
             name: "Domain",
             dependencies: [
@@ -37,7 +35,6 @@ let package = Package(
             ],
             path: "Sources/Domain"
         ),
-        // --- Infrastructure (Repositories, External Clients, DB) ---
         .target(
             name: "Infrastructure",
             dependencies: [
@@ -48,7 +45,6 @@ let package = Package(
             ],
             path: "Sources/Infrastructure"
         ),
-        // --- App (Main executable, routes, controllers, middleware) ---
         .executableTarget(
             name: "App",
             dependencies: [
@@ -59,12 +55,8 @@ let package = Package(
                 .product(name: "Leaf", package: "leaf"),
                 .product(name: "JWT", package: "jwt"),
             ],
-            path: "Sources/App",
-            swiftSettings: [
-                .enableUpcomingFeature("StrictConcurrency")
-            ]
+            path: "Sources/App"
         ),
-        // --- Unit Tests ---
         .testTarget(
             name: "AppTests",
             dependencies: [

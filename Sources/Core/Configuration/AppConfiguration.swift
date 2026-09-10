@@ -30,22 +30,22 @@ public struct AppConfiguration: Sendable {
     }
     
     public static func load() throws -> AppConfiguration {
-        // Required variables
-        guard let databaseURL = Environment.get("DATABASE_URL") else {
+        let env = ProcessInfo.processInfo.environment
+        
+        guard let databaseURL = env["DATABASE_URL"] else {
             throw ConfigurationError.missing("DATABASE_URL")
         }
-        guard let jwtSecret = Environment.get("JWT_SECRET") else {
+        guard let jwtSecret = env["JWT_SECRET"] else {
             throw ConfigurationError.missing("JWT_SECRET")
         }
         
-        // Optional with defaults
-        let hostname = Environment.get("HOSTNAME") ?? "127.0.0.1"
-        let portString = Environment.get("PORT") ?? "8080"
+        let hostname = env["HOSTNAME"] ?? "127.0.0.1"
+        let portString = env["PORT"] ?? "8080"
         guard let port = Int(portString) else {
             throw ConfigurationError.invalid("PORT", value: portString)
         }
         
-        let envString = Environment.get("SWIFT_ENV") ?? "development"
+        let envString = env["SWIFT_ENV"] ?? "development"
         guard let environment = Environment(rawValue: envString) else {
             throw ConfigurationError.invalid("SWIFT_ENV", value: envString)
         }

@@ -11,8 +11,10 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Select Xcode version
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      - name: Select Xcode 16
+        run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+      - name: Swift version
+        run: swift --version
       - name: Build (debug)
         run: swift build --build-tests
       - name: Run tests
@@ -24,6 +26,8 @@ jobs:
       image: swift:6.0-jammy
     steps:
       - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
       - name: Build (debug)
         run: swift build --build-tests
       - name: Run tests

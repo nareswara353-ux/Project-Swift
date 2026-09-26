@@ -1,17 +1,18 @@
+@preconcurrency import JWTKit
 import Vapor
-import JWT
 import Domain
 import Foundation
 import Core
 
-public struct JWTTokenGenerator: TokenGenerator {
+public struct JWTTokenGenerator: TokenGenerator, @unchecked Sendable {
     private let signers: JWTSigners
     private let expiration: TimeInterval
     
     public init(config: AppConfiguration, expiration: TimeInterval = 3600 * 24) throws {
         self.expiration = expiration
-        self.signers = JWTSigners()
-        signers.use(.hs256(key: config.jwtSecret))
+        let s = JWTSigners()
+        s.use(.hs256(key: config.jwtSecret))
+        self.signers = s
     }
     
     public func generateToken(for user: User) async throws -> String {
@@ -49,10 +50,7 @@ struct UserPayload: JWTPayload {
     
     func verify(using signer: JWTSigner) throws {
         guard exp > Date() else {
-            throw JWTError.claimVerificationFailure(
-                name: "exp",
-                reason: "Token expired"
-            )
+            throw JWTError.claimVerificationFailure(name: "exp", reason: "Token expired")
         }
     }
 }

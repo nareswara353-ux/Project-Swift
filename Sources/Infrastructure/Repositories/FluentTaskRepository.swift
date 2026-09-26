@@ -3,7 +3,7 @@ import Vapor
 import Domain
 import Foundation
 
-public struct FluentTaskRepository: TaskRepository {
+public struct FluentTaskRepository: TaskRepository, @unchecked Sendable {
     private let db: Database
     
     public init(db: Database) {
@@ -49,15 +49,8 @@ public struct FluentTaskRepository: TaskRepository {
         try await model.delete(on: db)
     }
     
-    public func list(
-        userId: UUID?,
-        status: Task.Status?,
-        priority: Task.Priority?,
-        limit: Int,
-        offset: Int
-    ) async throws -> [Task] {
+    public func list(userId: UUID?, status: Task.Status?, priority: Task.Priority?, limit: Int, offset: Int) async throws -> [Task] {
         var query = TaskModel.query(on: db)
-        
         if let userId = userId {
             query = query.filter(\.$userId == userId)
         }
@@ -67,21 +60,12 @@ public struct FluentTaskRepository: TaskRepository {
         if let priority = priority {
             query = query.filter(\.$priority == priority.rawValue)
         }
-        
-        let models = try await query
-            .limit(limit)
-            .offset(offset)
-            .all()
+        let models = try await query.limit(limit).offset(offset).all()
         return try models.map { try $0.toDomain() }
     }
     
-    public func count(
-        userId: UUID?,
-        status: Task.Status?,
-        priority: Task.Priority?
-    ) async throws -> Int {
+    public func count(userId: UUID?, status: Task.Status?, priority: Task.Priority?) async throws -> Int {
         var query = TaskModel.query(on: db)
-        
         if let userId = userId {
             query = query.filter(\.$userId == userId)
         }
@@ -91,7 +75,6 @@ public struct FluentTaskRepository: TaskRepository {
         if let priority = priority {
             query = query.filter(\.$priority == priority.rawValue)
         }
-        
         return try await query.count()
     }
     
@@ -102,9 +85,7 @@ public struct FluentTaskRepository: TaskRepository {
     }
 }
 
-// MARK: - Fluent Model
-@Model
-public final class TaskModel: Model {
+public final class TaskModel: Model, @unchecked Sendable {
     public static let schema = "tasks"
     
     @ID(key: .id)
@@ -113,7 +94,7 @@ public final class TaskModel: Model {
     @Field(key: "title")
     public var title: String
     
-    @Field(key: "description")
+    @OptionalField(key: "description")
     public var description: String?
     
     @Field(key: "status")
@@ -122,7 +103,7 @@ public final class TaskModel: Model {
     @Field(key: "priority")
     public var priority: String
     
-    @Field(key: "due_date")
+    @OptionalField(key: "due_date")
     public var dueDate: Date?
     
     @Timestamp(key: "created_at", on: .create)
@@ -149,15 +130,9 @@ public final class TaskModel: Model {
     }
     
     public func toDomain() throws -> Task {
-        guard let id = self.id else {
-            throw DecodingError.missingID
-        }
-        guard let createdAt = self.createdAt else {
-            throw DecodingError.missingCreatedAt
-        }
-        guard let updatedAt = self.updatedAt else {
-            throw DecodingError.missingUpdatedAt
-        }
+        guard let id = self.id else { throw DecodingError.missingID }
+        guard let createdAt = self.createdAt else { throw DecodingError.missingCreatedAt }
+        guard let updatedAt = self.updatedAt else { throw DecodingError.missingUpdatedAt }
         guard let status = Task.Status(rawValue: self.status) else {
             throw DecodingError.invalidStatus(self.status)
         }

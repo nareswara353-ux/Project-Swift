@@ -3,7 +3,7 @@ import Vapor
 import Domain
 import Foundation
 
-public struct FluentUserRepository: UserRepository {
+public struct FluentUserRepository: UserRepository, @unchecked Sendable {
     private let db: Database
     
     public init(db: Database) {
@@ -62,9 +62,7 @@ public struct FluentUserRepository: UserRepository {
     }
 }
 
-// MARK: - Fluent Model
-@Model
-public final class UserModel: Model {
+public final class UserModel: Model, @unchecked Sendable {
     public static let schema = "users"
     
     @ID(key: .id)

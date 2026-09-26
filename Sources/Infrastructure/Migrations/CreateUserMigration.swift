@@ -1,7 +1,7 @@
 import Fluent
 import Vapor
 
-struct CreateUserMigration: Migration {
+struct CreateUserMigration: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema("users")
             .id()

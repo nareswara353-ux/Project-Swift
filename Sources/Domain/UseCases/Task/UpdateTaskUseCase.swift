@@ -29,69 +29,45 @@ public struct UpdateTaskUseCase: Sendable {
     
     public struct Output: Sendable {
         public let task: Task
-        
-        public init(task: Task) {
-            self.task = task
-        }
+        public init(task: Task) { self.task = task }
     }
     
-    public enum UpdateTaskError: Error, Equatable, CustomStringConvertible {
+    public enum UpdateTaskError: Error, Equatable {
         case taskNotFound
         case permissionDenied
         case emptyTitle
         case pastDueDate
-        
-        public var description: String {
-            switch self {
-            case .taskNotFound:
-                return "Task not found"
-            case .permissionDenied:
-                return "You don't have permission to update this task"
-            case .emptyTitle:
-                return "Task title cannot be empty"
-            case .pastDueDate:
-                return "Due date cannot be in the past"
-            }
-        }
     }
     
     public func execute(input: Input) async throws -> Output {
         guard let existingTask = try await taskRepository.findById(input.taskId) else {
             throw UpdateTaskError.taskNotFound
         }
-        
         guard existingTask.userId == input.userId else {
             throw UpdateTaskError.permissionDenied
         }
-        
         var updatedTask = existingTask
-        
         if let title = input.title {
             guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw UpdateTaskError.emptyTitle
             }
             updatedTask.title = title
         }
-        
         if let description = input.description {
             updatedTask.description = description
         }
-        
         if let status = input.status {
             updatedTask.updateStatus(status)
         }
-        
         if let priority = input.priority {
             updatedTask.updatePriority(priority)
         }
-        
         if let dueDate = input.dueDate {
             guard dueDate >= Date() else {
                 throw UpdateTaskError.pastDueDate
             }
             updatedTask.updateDueDate(dueDate)
         }
-        
         try await taskRepository.update(updatedTask)
         return Output(task: updatedTask)
     }

@@ -1,5 +1,5 @@
 import Foundation
-import Crypto
+import Vapor
 
 public struct RegisterUserUseCase: Sendable {
     public let userRepository: UserRepository
@@ -48,35 +48,28 @@ public struct RegisterUserUseCase: Sendable {
     }
     
     public func execute(input: Input) async throws -> Output {
-        // 1. Validate email
         guard let email = Email(input.email) else {
             throw RegistrationError.invalidEmail
         }
         
-        // 2. Validate password strength
         guard validatePassword(input.password) else {
             throw RegistrationError.weakPassword
         }
         
-        // 3. Check if email already exists
         if try await userRepository.findByEmail(email) != nil {
             throw RegistrationError.emailAlreadyExists
         }
         
-        // 4. Hash password using BCrypt
         let passwordHash = try Bcrypt.hash(input.password)
         
-        // 5. Create User entity
         let user = User(
             email: email,
             passwordHash: passwordHash,
             role: input.role ?? .user
         )
         
-        // 6. Save to repository
         try await userRepository.create(user)
         
-        // 7. Return output
         return Output(userId: user.id, email: user.email)
     }
     

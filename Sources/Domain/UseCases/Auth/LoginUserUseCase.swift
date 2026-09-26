@@ -51,7 +51,7 @@ public struct LoginUserUseCase: Sendable {
             throw LoginError.userNotFound
         }
         
-        guard try Bcrypt.verify(input.password, against: user.passwordHash) else {
+        guard try Bcrypt.verify(input.password, created: user.passwordHash) else {
             throw LoginError.invalidCredentials
         }
         

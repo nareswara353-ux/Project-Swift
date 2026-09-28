@@ -3,24 +3,16 @@ import Domain
 
 actor MockUserRepository: UserRepository {
     private var users: [UUID: User] = [:]
-    private var shouldThrowOnCreate: Bool = false
-    private var shouldThrowOnUpdate: Bool = false
-    private var shouldThrowOnDelete: Bool = false
+    private var throwsOnCreate: Bool = false
+    private var throwsOnUpdate: Bool = false
+    private var throwsOnDelete: Bool = false
     
-    func setShouldThrowOnCreate(_ throw: Bool) {
-        shouldThrowOnCreate = `throw`
-    }
-    
-    func setShouldThrowOnUpdate(_ throw: Bool) {
-        shouldThrowOnUpdate = `throw`
-    }
-    
-    func setShouldThrowOnDelete(_ throw: Bool) {
-        shouldThrowOnDelete = `throw`
-    }
+    func setThrowsOnCreate(_ value: Bool) { throwsOnCreate = value }
+    func setThrowsOnUpdate(_ value: Bool) { throwsOnUpdate = value }
+    func setThrowsOnDelete(_ value: Bool) { throwsOnDelete = value }
     
     func create(_ user: User) async throws {
-        if shouldThrowOnCreate {
+        if throwsOnCreate {
             throw RepositoryError.duplicateEmail(user.email)
         }
         guard users[user.id] == nil else {
@@ -38,7 +30,7 @@ actor MockUserRepository: UserRepository {
     }
     
     func update(_ user: User) async throws {
-        if shouldThrowOnUpdate {
+        if throwsOnUpdate {
             throw RepositoryError.notFound("User with id \(user.id)")
         }
         guard users[user.id] != nil else {
@@ -48,7 +40,7 @@ actor MockUserRepository: UserRepository {
     }
     
     func delete(id: UUID) async throws {
-        if shouldThrowOnDelete {
+        if throwsOnDelete {
             throw RepositoryError.notFound("User with id \(id)")
         }
         guard users[id] != nil else {

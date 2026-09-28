@@ -29,21 +29,17 @@ public struct AuthMiddleware: AsyncMiddleware {
         guard let bearer = request.headers.bearerAuthorization else {
             throw Abort(.unauthorized, reason: "Missing bearer token")
         }
-        
         guard let userID = try await tokenGenerator.validateToken(bearer.token) else {
             throw Abort(.unauthorized, reason: "Invalid or expired token")
         }
-        
         guard let user = try await request.userRepository.findById(userID) else {
             throw Abort(.unauthorized, reason: "User not found")
         }
-        
         request.authenticatedUser = AuthenticatedUser(
             userID: user.id,
             email: user.email.value,
             role: user.role.rawValue
         )
-        
         return try await next.respond(to: request)
     }
 }

@@ -83,7 +83,7 @@ final class CreateTaskUseCaseTests: XCTestCase {
     
     func testCreateTaskRepositoryError() async throws {
         let repo = MockTaskRepository()
-        await repo.setShouldThrowOnCreate(true)
+        await repo.setThrowsOnCreate(true)
         let useCase = CreateTaskUseCase(taskRepository: repo)
         let input = CreateTaskUseCase.Input(
             title: "Test Task",

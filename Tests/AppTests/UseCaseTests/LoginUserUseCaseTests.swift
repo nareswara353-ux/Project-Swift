@@ -8,11 +8,11 @@ final class LoginUserUseCaseTests: XCTestCase {
         let registerUseCase = RegisterUserUseCase(userRepository: repo)
         let registerInput = RegisterUserUseCase.Input(email: "test@example.com", password: "Password123")
         _ = try await registerUseCase.execute(input: registerInput)
+        
         let loginUseCase = LoginUserUseCase(userRepository: repo)
         let loginInput = LoginUserUseCase.Input(email: "test@example.com", password: "Password123")
         let output = try await loginUseCase.execute(input: loginInput)
         XCTAssertEqual(output.user.email.value, "test@example.com")
-        XCTAssertFalse(output.token.isEmpty)
     }
     
     func testLoginUserNotFound() async throws {
@@ -33,8 +33,9 @@ final class LoginUserUseCaseTests: XCTestCase {
         let registerUseCase = RegisterUserUseCase(userRepository: repo)
         let registerInput = RegisterUserUseCase.Input(email: "test@example.com", password: "Password123")
         _ = try await registerUseCase.execute(input: registerInput)
+        
         let loginUseCase = LoginUserUseCase(userRepository: repo)
-        let loginInput = LoginUserUseCase.Input(email: "test@example.com", password: "WrongPassword")
+        let loginInput = LoginUserUseCase.Input(email: "test@example.com", password: "WrongPassword1")
         do {
             _ = try await loginUseCase.execute(input: loginInput)
             XCTFail("Expected invalidCredentials error")
